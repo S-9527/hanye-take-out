@@ -59,4 +59,10 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
             return false;
         }
     }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        // 清理 ThreadLocal，避免数据残留
+        BaseContext.removeCurrentId();
+    }
 }
