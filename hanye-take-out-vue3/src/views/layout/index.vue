@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage, type FormInstance } from 'element-plus'
-import { useUserInfoStore } from '@/store'
-import { ref, reactive, onMounted, onBeforeUnmount, watchEffect } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { fixPwdAPI } from '@/api/employee'
 import { getStatusAPI, fixStatusAPI } from '@/api/shop'
 import { ElNotification } from 'element-plus'
 import { createNewPwdRules, createOldPwdRules, createRepasswordRules } from '@/views/login/rules'
+import { useUserStore } from '@/store/user'
+import { cleanToken } from '@/utils/token'
+import { goToLogin } from '@/composables/goto'
 
 // ------ data ------
 const dialogFormVisible = ref(false)
@@ -76,7 +78,7 @@ const rules = { // 表单的规则检验对象
 
 // ------ method ------
 const router = useRouter()
-const userInfoStore = useUserInfoStore()
+const userStore = useUserStore()
 const route = useRoute();
 // 根据当前路由的路径返回要激活的菜单项
 const getActiveAside = () => {
@@ -86,10 +88,10 @@ const getActiveAside = () => {
 
 // 初始化时获取营业状态
 const init = async () => {
-  const { data: res } = await getStatusAPI()
-  console.log('初始化后的status status_active', res.data)
-  status.value = res.data
-  status_active.value = res.data
+  const res = await getStatusAPI()
+  console.log('初始化后的status status_active', res)
+  status.value = res
+  status_active.value = res
 }
 
 // 关闭修改店铺状态对话框
@@ -152,9 +154,8 @@ const quitFn = () => {
         message: '退出成功',
       })
       // 清除用户信息，包括token
-      userInfoStore.userInfo = null
-      console.log(userInfoStore)
-      router.push('/login')
+      cleanToken()
+      goToLogin()
     })
     .catch(() => {
       ElMessage({
@@ -309,7 +310,7 @@ onBeforeUnmount(() => {
         </div>
         <el-dropdown style="float: right">
           <el-button type="primary">
-            {{ userInfoStore.userInfo ? userInfoStore.userInfo.account : '未登录' }}
+            {{ userStore.user ? userStore.user.account : '未登录' }}
             <el-icon class="arrow-down-icon"><arrow-down /></el-icon>
           </el-button>
           <template #dropdown>

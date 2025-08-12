@@ -30,7 +30,10 @@ export const useUserStore = defineStore('user', () => {
       await registerAPI(params);
     }
 
+  console.log("user",user)
+
     return {
+      user,
       login,
       register
     }

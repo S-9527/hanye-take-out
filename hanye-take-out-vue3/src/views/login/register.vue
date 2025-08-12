@@ -2,14 +2,14 @@
 import { ref } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import { createAccountRules, createPasswordRules, createRepasswordRules } from '@/views/login/rules'
-import { useGoto } from '@/composables/goto'
+import { goToLogin } from '@/composables/goto'
 import { useUserStore } from '@/store/user'
 import { ComponentName, useNavigate } from '@/views/login/navigate'
 
 export interface RegisterFormValue {
   account: string,
   password: string,
-  repassword: string
+  rePwd: string
 }
 
 // 表单校验的ref
@@ -17,23 +17,22 @@ const registerRef = ref<FormInstance | null>(null);
 const form = ref<RegisterFormValue>({ // 表单的数据对象
   account: '', // 用户名
   password: '', // 密码
-  repassword: '' // 确认密码
+  rePwd: '' // 确认密码
 })
 
 const rules = {
   account: createAccountRules(),
   password: createPasswordRules(),
-  repassword: createRepasswordRules(form.value)
+  rePwd: createRepasswordRules(form.value)
 }
 
 const userStore = useUserStore()
-const { gotoHome } = useGoto()
 function register() {
   registerRef.value?.validate(async (result: boolean) => {
     if (result) {
       await userStore.register(form.value)
       ElMessage.success('注册成功')
-      gotoHome()
+      goToLogin()
     }
   })
 }
@@ -57,8 +56,8 @@ function handleClick() {
       <el-form-item prop="password">
         <el-input type="password" placeholder="请输入密码" v-model="form.password"></el-input>
       </el-form-item>
-      <el-form-item prop="repassword">
-        <el-input type="password" placeholder="请再次确认密码" v-model="form.repassword"></el-input>
+      <el-form-item prop="rePwd">
+        <el-input type="password" placeholder="请再次确认密码" v-model="form.rePwd"></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" class="btn-reg" @click="register">注册</el-button>
