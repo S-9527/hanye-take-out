@@ -1,11 +1,12 @@
-<script setup lang="ts" name="layout">
+<script setup lang="ts">
 import { RouterView, useRouter, useRoute } from 'vue-router'
-import { ElMessageBox, ElMessage } from 'element-plus'
+import { ElMessageBox, ElMessage, type FormInstance } from 'element-plus'
 import { useUserInfoStore } from '@/store'
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, watchEffect } from 'vue'
 import { fixPwdAPI } from '@/api/employee'
 import { getStatusAPI, fixStatusAPI } from '@/api/shop'
 import { ElNotification } from 'element-plus'
+import { createNewPwdRules, createOldPwdRules, createRepasswordRules } from '@/views/login/rules'
 
 // ------ data ------
 const dialogFormVisible = ref(false)
@@ -51,43 +52,26 @@ const menuList = [
   },
 ]
 
-const form = reactive({
+export interface ModifyFormValue {
+  oldPwd: string,
+  newPwd: string,
+  rePwd?: string
+}
+
+const pwdRef = ref<FormInstance | null>(null)
+const form = reactive<ModifyFormValue>({
   oldPwd: '',
   newPwd: '',
   rePwd: '',
 })
-const pwdRef = ref()
+
 const status = ref(1)
 const status_active = ref(1) // 单选框绑定的动态值
 
-// 自定义校验规则: 两次密码是否一致
-const samePwd = (rules: any, value: any, callback: any) => {
-  if (value !== form.newPwd) {
-    // 如果验证失败，则调用 回调函数时，指定一个 Error 对象。
-    callback(new Error('两次输入的密码不一致!'))
-  } else {
-    // 如果验证成功，则直接调用 callback 回调函数即可。
-    callback()
-  }
-}
 const rules = { // 表单的规则检验对象
-  oldPwd: [
-    { required: true, message: '请输入原密码', trigger: 'blur' },
-    {
-      pattern: /^[a-zA-Z0-9]{1,10}$/,
-      message: '原密码必须是1-10的大小写字母数字',
-      trigger: 'blur'
-    }
-  ],
-  newPwd: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { pattern: /^\S{6,15}$/, message: '新密码必须是6-15的非空字符', trigger: 'blur' }
-  ],
-  rePwd: [
-    { required: true, message: '请再次输入新密码', trigger: 'blur' },
-    { pattern: /^\S{6,15}$/, message: '新密码必须是6-15的非空字符', trigger: 'blur' },
-    { validator: samePwd, trigger: 'blur' }
-  ]
+  oldPwd: createOldPwdRules(),
+  newPwd: createNewPwdRules(),
+  rePwd: createRepasswordRules(form, 'newPwd')
 }
 
 // ------ method ------
@@ -107,7 +91,6 @@ const init = async () => {
   status.value = res.data
   status_active.value = res.data
 }
-init()
 
 // 关闭修改店铺状态对话框
 const cancelStatus = () => {
@@ -141,24 +124,15 @@ const fixStatus = async () => {
 }
 // 修改密码
 const fixPwd = async () => {
-  const valid = await pwdRef.value.validate()
-  if (valid) {
-    const submitForm = {
-      oldPwd: form.oldPwd,
-      newPwd: form.newPwd,
+  await pwdRef.value?.validate(async (result: boolean) => {
+    if (result) {
+      await fixPwdAPI({
+        oldPwd: form.oldPwd,
+        newPwd: form.newPwd,
+      })
+      dialogFormVisible.value = false
     }
-    console.log('要提交的表单信息')
-    console.log(submitForm)
-    const { data: res } = await fixPwdAPI(submitForm)
-    if (res.code != 0) return   // 密码错误信息会在相应拦截器中捕获并提示
-    ElMessage({
-      type: 'success',
-      message: '修改成功',
-    })
-    dialogFormVisible.value = false
-  } else {
-    return false
-  }
+  })
 }
 
 const quitFn = () => {
@@ -267,7 +241,7 @@ const handleClose = () => {
 // lifecycle hooks
 onMounted(() => {
   document.addEventListener('click', handleClose)
-  // getStatus()
+  init()
   webSocket()
 })
 
@@ -548,7 +522,6 @@ a:hover {
   height: 18px;
   font-size: 10px;
   line-height: 16px;
-  font-size: 10px;
   border-radius: 50%;
   padding: 0;
 }

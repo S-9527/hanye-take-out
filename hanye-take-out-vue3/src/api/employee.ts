@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { UserResponse } from '@/api/types' // 引入自定义的axios函数
+import type { ModifyUserResponse, UserResponse } from '@/api/types'
+import type { ModifyFormValue } from '@/views/layout/index.vue' // 引入自定义的axios函数
 
 export interface Account {
   account: string
@@ -33,13 +34,9 @@ export const registerAPI = (params: Account) => {
  * @param params 新旧密码的DTO对象
  * @returns 
  */
-export const fixPwdAPI = (params: any) => {
-  console.log(params)
-  console.log({ ...params })
-  return request({
-    url: '/employee/fixpwd',
-    method: 'put',
-    data: { ...params }
+export const fixPwdAPI = (params: ModifyFormValue) => {
+  return request.put<ModifyUserResponse,ModifyUserResponse>('/employee/fixpwd', {
+    ...params
   })
 }
 
