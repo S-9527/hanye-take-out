@@ -1,15 +1,19 @@
-import request from '@/utils/request' // 引入自定义的axios函数
+import request from '@/utils/request'
+import type { UserResponse } from '@/api/types' // 引入自定义的axios函数
+
+export interface Account {
+  account: string
+  password: string
+}
 
 /**
  * 登录接口（这是JSDoc注释）
- * @param {*} param0 {username: 用户名, password: 密码}
  * @returns Promise对象
+ * @param params
  */
-export const loginAPI = (params: any) => {
-  return request({
-    url: '/employee/login',
-    method: 'post',
-    data: { ...params }
+export const loginAPI = (params: Account) => {
+  return request.post<UserResponse, UserResponse>('/employee/login', {
+    ...params
   })
 }
 
@@ -18,13 +22,9 @@ export const loginAPI = (params: any) => {
  * @param params 注册的DTO对象
  * @returns 
  */
-export const registerAPI = (params: any) => {
-  console.log(params)
-  console.log({ ...params })
-  return request({
-    url: '/employee/register',
-    method: 'post',
-    data: { ...params }
+export const registerAPI = (params: Account) => {
+  return request.post('/employee/register', {
+    ...params
   })
 }
 

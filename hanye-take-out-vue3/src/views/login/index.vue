@@ -1,54 +1,7 @@
 <script setup lang="ts">
-import { loginAPI } from '@/api/employee'
-import { useRouter } from 'vue-router'
-import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useUserInfoStore } from '@/store'
+import { useNavigate } from '@/views/login/navigate'
 
-const userInfoStore = useUserInfoStore()
-
-const form = ref({
-  account: '',
-  password: ''
-});
-// 表单校验的ref
-const loginRef = ref()
-
-const rules = {
-  account: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9]{1,10}$/, message: '用户名必须是1-10的字母数字', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { pattern: /^\S{6,15}$/, message: '密码必须是6-15的非空字符', trigger: 'blur' }
-  ]
-}
-
-const router = useRouter()
-
-const loginFn = async () => {
-  // 先校验输入格式是否合法
-  const valid = await loginRef.value.validate()
-  if (valid) {
-    // 调用登录接口
-    const { data: res } = await loginAPI(form.value)
-    console.log(res)
-    // 登录失败，提示用户，这个提示已经在响应拦截器中统一处理了，这里直接return就行
-    if (res.code !== 0) {
-      return false
-    }
-    // 登录成功，提示用户
-    ElMessage.success('登录成功')
-    // 把后端返回的当前登录用户信息(包括token)存储到Pinia里
-    userInfoStore.userInfo = res.data
-    console.log(userInfoStore.userInfo)
-    // 跳转到首页
-    router.push('/')
-  } else {
-    return false
-  }
-}
+const { getComponent } = useNavigate()
 </script>
 
 <template>
@@ -108,19 +61,7 @@ const loginFn = async () => {
       <span style="--i:14;"></span>
       <span style="--i:61;"></span>
     </div>
-    <el-form label-width="0px" class="login-box" :model="form" :rules="rules" ref="loginRef">
-      <div class="title-box">登 录</div>
-      <el-form-item prop="account">
-        <el-input v-model="form.account" placeholder="请输入账号"></el-input>
-      </el-form-item>
-      <el-form-item prop="password">
-        <el-input type="password" v-model="form.password" placeholder="请输入密码"></el-input>
-      </el-form-item>
-      <el-form-item class="my-el-form-item">
-        <el-button type="primary" class="btn-login" @click="loginFn">登录</el-button>
-        <el-link type="info" @click="$router.push('/reg')">去注册</el-link>
-      </el-form-item>
-    </el-form>
+    <component :is="getComponent()"></component>
   </div>
 </template>
 
